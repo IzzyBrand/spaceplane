@@ -39,9 +39,21 @@ print '\n################# READY FOR FLIGHT #################\n'
 # Ascent
 ###############################################################################
 
+# maintain a circular buffer of altitude
+alt_buffer_len 	= int(60/LOOP_DELAY)
+alt_buffer 		= np.ones([alt_buffer_len]) * vehicle.location.global_frame.alt
+alt_buffer_ind 	= 0
+
 prev_time_below_burn_alt = time()
 while True:
 	alt = vehicle.location.global_frame.alt
+	alt_buffer[alt_buffer_ind] = alt
+	alt_buffer_ind += 1
+	alt_buffer_ind = alt_buffer_ind % alt_buffer_len
+	if (alt - alt_buffer[alt_buffer_ind] < 50):
+		print 'WARNING: descended 50m in 60 seconds. Disconnecting.'
+		break
+
 	if alt < BURN_ALTITUDE: 
 		prev_time_below_burn_alt = time()
 	else: 
@@ -50,8 +62,11 @@ while True:
 		if time_above > BURN_TIME_ABOVE:
 			break
 
+	time.sleep(LOOP_DELAY)
+
 print_status()
 print '\n################# REACHED BURN ALTITUDE #################\n'
+
 
 ###############################################################################
 # Burn
@@ -59,6 +74,7 @@ print '\n################# REACHED BURN ALTITUDE #################\n'
 
 GPIO.output(BURN_PIN, GPIO.HIGH)
 vehicle.mode = VehicleMode("GUIDED")
+vehicle.simple_goto
 
 prev_time_above_burn_alt = time()
 while True:
@@ -71,6 +87,8 @@ while True:
 		if time_below > BURN_TIME_ABOVE:
 			break
 
+	time.sleep(LOOP_DELAY)
+
 GPIO.output(BURN_PIN, GPIO.LOW)
 
 print_status()
@@ -82,7 +100,7 @@ print '\n################# VEHICLE DISCONNECTED #################\n'
 
 while True():
 	print_status()
-	time.sleep(1)
+	time.sleep(LOOP_DELAY)
 
 def print_status():
 	print 'Time: {}\tMode: {}\t Alt: {}\tLoc: ({}, {})'.format(

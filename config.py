@@ -5,3 +5,4 @@ BURN_TIME_ABOVE 		= 20				# time above burn alt before ignite
 TARGET_LAT	 			= 42.345131			# desired landing latitude
 TARGET_LON				= -71.210126		# desired landing longitude
 TARGET_ALT 				= 0 				# meters above sea level
+LOOP_DELAY				= 0.5				# time in seconds to delay within loops
