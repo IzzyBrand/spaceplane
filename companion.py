@@ -1,18 +1,40 @@
 from dronekit import connect, VehicleMode, APIException, LocationGlobal
 from pymavlink import mavutil
-from time
+import time
+import numpy as np
 from config import *
 from helpers import *
-import RPi.GPIO as GPIO
+#import RPi.GPIO as GPIO
 import sys
 import argparse
 
 ###############################################################################
+# Functions
+###############################################################################
+
+start_time = time.time()
+def mytime():
+	return time.time() - start_time
+
+def exit(status):
+	if vehicle is not None: vehicle.close()
+	#GPIO.cleanup()
+	sys.exit(status)
+
+def print_status():
+	print 'Time: {}\tMode: {}\t Alt: {}\tLoc: ({}, {})'.format(
+		mytime(),
+		vehicle.mode.name,
+		vehicle.location.global_frame.alt,
+		vehicle.location.global_frame.lat,
+		vehicle.location.global_frame.lon)
+
+###############################################################################
 # Setup
 ###############################################################################
-GPIO.setup(BURN_PIN, GPIO.OUT)
-GPIO.output(BURN_PIN, GPIO.LOW)
-start_time = time.time()
+#GPIO.setup(BURN_PIN, GPIO.OUT)
+#GPIO.output(BURN_PIN, GPIO.LOW)
+
 
 vehicle = None
 try:
@@ -22,15 +44,17 @@ except Exception as e:
 	print 'Failed to connect to pixhawk. exiting.'
 	exit(1)
 
-vehicle.mode = VehicleMode("MANUAL")
-while not vehicle.mode.name == "MANUAL":
+# vehicle.mode = VehicleMode("MANUAL")
+vehicle.mode = VehicleMode("STABILIZE")
+
+while not vehicle.mode.name == "STABILIZE":
 	print 'Waiting for MANUAL mode.'
-	sleep(1)
+	time.sleep(1)
 
 vehicle.armed = True
 while not vehicle.armed:
 	print 'Waiting for arm.'
-	sleep(1)
+	time.sleep(1)
 
 print_status()
 print '\n################# READY FOR FLIGHT #################\n'
@@ -44,20 +68,20 @@ alt_buffer_len 	= int(60/LOOP_DELAY)
 alt_buffer 		= np.ones([alt_buffer_len]) * vehicle.location.global_frame.alt
 alt_buffer_ind 	= 0
 
-prev_time_below_burn_alt = time()
+prev_time_below_burn_alt = mytime()
 while True:
 	alt = vehicle.location.global_frame.alt
 	alt_buffer[alt_buffer_ind] = alt
 	alt_buffer_ind += 1
 	alt_buffer_ind = alt_buffer_ind % alt_buffer_len
-	if (alt - alt_buffer[alt_buffer_ind] < 50):
+	if (alt - alt_buffer[alt_buffer_ind] < -50):
 		print 'WARNING: descended 50m in 60 seconds. Disconnecting.'
 		break
 
 	if alt < BURN_ALTITUDE: 
-		prev_time_below_burn_alt = time()
+		prev_time_below_burn_alt = mytime()
 	else: 
-		time_above = time() - prev_time_below_burn_alt
+		time_above = mytime() - prev_time_below_burn_alt
 		print 'Above {}m for {} seconds'.format(BURN_ALTITUDE, time_above)
 		if time_above > BURN_TIME_ABOVE:
 			break
@@ -72,24 +96,24 @@ print '\n################# REACHED BURN ALTITUDE #################\n'
 # Burn
 ###############################################################################
 
-GPIO.output(BURN_PIN, GPIO.HIGH)
+#GPIO.output(BURN_PIN, GPIO.HIGH)
 vehicle.mode = VehicleMode("GUIDED")
 vehicle.simple_goto
 
-prev_time_above_burn_alt = time()
+prev_time_above_burn_alt = mytime()
 while True:
 	alt = vehicle.location.global_frame.alt
 	if alt > BURN_ALTITUDE: 
-		prev_time_above_burn_alt = time()
+		prev_time_above_burn_alt = mytime()
 	else: 
-		time_below = time() - prev_time_above_burn_alt
+		time_below = mytime() - prev_time_above_burn_alt
 		print 'Below {}m for {} seconds'.format(BURN_ALTITUDE, time_below)
 		if time_below > BURN_TIME_ABOVE:
 			break
 
 	time.sleep(LOOP_DELAY)
 
-GPIO.output(BURN_PIN, GPIO.LOW)
+#GPIO.output(BURN_PIN, GPIO.LOW)
 
 print_status()
 print '\n################# VEHICLE DISCONNECTED #################\n'
@@ -98,22 +122,7 @@ print '\n################# VEHICLE DISCONNECTED #################\n'
 # Descent
 ###############################################################################
 
-while True():
+while True:
 	print_status()
 	time.sleep(LOOP_DELAY)
 
-def print_status():
-	print 'Time: {}\tMode: {}\t Alt: {}\tLoc: ({}, {})'.format(
-		time(),
-		vehicle.mode.name,
-		vehicle.location.global_frame.alt,
-		vehicle.location.global_frame.lat,
-		vehicle.location.global_frame.lon)
-
-def time():
-	return time.time() - start_time
-
-def exit(status):
-	if vehicle is not None: vehicle.close()
-	GPIO.cleanup()
-	sys.exit(status)
