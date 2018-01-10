@@ -73,8 +73,9 @@ while True:
 	alt_buffer[alt_buffer_ind] = alt
 	alt_buffer_ind += 1
 	alt_buffer_ind = alt_buffer_ind % alt_buffer_len
-	if (alt - alt_buffer[alt_buffer_ind] < -50):
-		print 'WARNING: descended 50m in 60 seconds. Disconnecting.'
+	alt_diff = alt - alt_buffer[alt_buffer_ind]
+	if (alt_diff < -50):
+		print 'WARNING: descended {}m in 60 seconds. Disconnecting.'.format(alt_diff)
 		break
 
 	if alt < BURN_ALTITUDE: 
