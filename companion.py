@@ -3,7 +3,6 @@ from pymavlink import mavutil
 import time
 import numpy as np
 from config import *
-from helpers import *
 #import RPi.GPIO as GPIO
 import sys
 import argparse
@@ -44,10 +43,9 @@ except Exception as e:
 	print 'Failed to connect to pixhawk. exiting.'
 	exit(1)
 
-# vehicle.mode = VehicleMode("MANUAL")
-vehicle.mode = VehicleMode("STABILIZE")
+vehicle.mode = VehicleMode("MANUAL")
 
-while not vehicle.mode.name == "STABILIZE":
+while not vehicle.mode.name == "MANUAL":
 	print 'Waiting for MANUAL mode.'
 	time.sleep(1)
 
