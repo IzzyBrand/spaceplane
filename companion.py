@@ -3,7 +3,7 @@ from pymavlink import mavutil
 import time
 import numpy as np
 from config import *
-#import RPi.GPIO as GPIO
+import RPi.GPIO as GPIO
 import sys
 import argparse
 
@@ -17,22 +17,23 @@ def mytime():
 
 def exit(status):
 	if vehicle is not None: vehicle.close()
-	#GPIO.cleanup()
+	GPIO.cleanup()
 	sys.exit(status)
 
 def print_status():
 	print 'Time: {}\tMode: {}\t Alt: {}\tLoc: ({}, {})'.format(
 		mytime(),
 		vehicle.mode.name,
-		vehicle.location.global_frame.alt,
+		vehicle.location.global_relative_frame.alt,
 		vehicle.location.global_frame.lat,
 		vehicle.location.global_frame.lon)
 
 ###############################################################################
 # Setup
 ###############################################################################
-#GPIO.setup(BURN_PIN, GPIO.OUT)
-#GPIO.output(BURN_PIN, GPIO.LOW)
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(BURN_PIN, GPIO.OUT)
+GPIO.output(BURN_PIN, GPIO.LOW)
 
 
 vehicle = None
@@ -63,12 +64,12 @@ print '\n################# READY FOR FLIGHT #################\n'
 
 # maintain a circular buffer of altitude
 alt_buffer_len 	= int(60/LOOP_DELAY)
-alt_buffer 		= np.ones([alt_buffer_len]) * vehicle.location.global_frame.alt
+alt_buffer 		= np.ones([alt_buffer_len]) * vehicle.location.global_relative_frame.alt
 alt_buffer_ind 	= 0
 
 prev_time_below_burn_alt = mytime()
 while True:
-	alt = vehicle.location.global_frame.alt
+	alt = vehicle.location.global_relative_frame.alt
 	alt_buffer[alt_buffer_ind] = alt
 	alt_buffer_ind += 1
 	alt_buffer_ind = alt_buffer_ind % alt_buffer_len
@@ -87,34 +88,34 @@ while True:
 	time.sleep(LOOP_DELAY)
 
 print_status()
-print '\n################# REACHED BURN ALTITUDE #################\n'
+print '\n################# REACHED ALTITUDE: BURN STARTED #################\n'
 
 
 ###############################################################################
 # Burn
 ###############################################################################
 
-#GPIO.output(BURN_PIN, GPIO.HIGH)
+GPIO.output(BURN_PIN, GPIO.HIGH)
 vehicle.mode = VehicleMode("GUIDED")
 vehicle.simple_goto
 
 prev_time_above_burn_alt = mytime()
 while True:
-	alt = vehicle.location.global_frame.alt
+	alt = vehicle.location.global_relative_frame.alt
 	if alt > BURN_ALTITUDE: 
 		prev_time_above_burn_alt = mytime()
 	else: 
 		time_below = mytime() - prev_time_above_burn_alt
 		print 'Below {}m for {} seconds'.format(BURN_ALTITUDE, time_below)
-		if time_below > BURN_TIME_ABOVE:
+		if time_below > BURN_TIME_BELOW:
 			break
 
 	time.sleep(LOOP_DELAY)
 
-#GPIO.output(BURN_PIN, GPIO.LOW)
+GPIO.output(BURN_PIN, GPIO.LOW)
 
 print_status()
-print '\n################# VEHICLE DISCONNECTED #################\n'
+print '\n################# VEHICLE DISCONNECTED: BURN STOPPED #################\n'
 
 ###############################################################################
 # Descent
