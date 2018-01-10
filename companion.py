@@ -34,7 +34,7 @@ def print_status():
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(BURN_PIN, GPIO.OUT)
 GPIO.output(BURN_PIN, GPIO.LOW)
-
+target_location = LocationGlobal(TARGET_LAT, TARGET_LON, 1000)
 
 vehicle = None
 try:
@@ -86,6 +86,7 @@ while True:
 		if time_above > BURN_TIME_ABOVE:
 			break
 
+	if alt_buffer_ind == 0: print_status()	# print status once every 60 seconds
 	time.sleep(LOOP_DELAY)
 
 print_status()
@@ -98,7 +99,7 @@ print '\n################# REACHED ALTITUDE: BURN STARTED #################\n'
 
 GPIO.output(BURN_PIN, GPIO.HIGH)
 vehicle.mode = VehicleMode("GUIDED")
-vehicle.simple_goto
+vehicle.simple_goto(target_location)
 
 prev_time_above_burn_alt = mytime()
 while True:
@@ -124,5 +125,5 @@ print '\n################# VEHICLE DISCONNECTED: BURN STOPPED #################\
 
 while True:
 	print_status()
-	time.sleep(LOOP_DELAY)
+	time.sleep(60)
 
