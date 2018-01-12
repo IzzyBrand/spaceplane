@@ -1,4 +1,4 @@
-PORT 					= '/dev/tty.usbmodem1'	# whic port the pixhawk is on
+PORT 					= '/dev/ttyACM0'	# whic port the pixhawk is on
 BURN_PIN 				= 27				# pin with burn relay
 BURN_ALTITUDE 			= 85 			    # altitude at which to burn
 BURN_TIME_ABOVE 		= 5					# time above burn alt before ignite

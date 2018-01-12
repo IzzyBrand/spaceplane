@@ -3,6 +3,7 @@ from pymavlink import mavutil
 import time
 import numpy as np
 from config import *
+from util import *
 import RPi.GPIO as GPIO
 import sys
 import argparse
@@ -12,6 +13,8 @@ import argparse
 ###############################################################################
 
 start_time = time.time()
+target_location = LocationGlobalRelative(TARGET_LAT, TARGET_LON, 0)
+
 def mytime():
 	return time.time() - start_time
 
@@ -21,12 +24,13 @@ def exit(status):
 	sys.exit(status)
 
 def print_status():
-	print 'Time: {}\tMode: {}\t Alt: {}\tLoc: ({}, {})'.format(
+	print 'Time: {:.2f}s\tMode: {}\t Alt: {}m\tLoc: ({}, {})\tdist: {:.3f}km.'.format(
 		mytime(),
 		vehicle.mode.name,
 		vehicle.location.global_relative_frame.alt,
 		vehicle.location.global_frame.lat,
-		vehicle.location.global_frame.lon)
+		vehicle.location.global_frame.lon,
+		straight_line_dist(target_location, vehicle.location.global_frame))
 
 ###############################################################################
 # Setup
@@ -34,7 +38,10 @@ def print_status():
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(BURN_PIN, GPIO.OUT)
 GPIO.output(BURN_PIN, GPIO.LOW)
-target_location = LocationGlobalRelative(TARGET_LAT, TARGET_LON, 0)
+print 'GPIO enabled on pin {}'.format(BURN_PIN)
+print 'Burst altitude set to {} meters\n'.format(BURN_ALTITUDE)
+
+
 
 vehicle = None
 try:
@@ -58,6 +65,7 @@ vehicle.armed = True
 while not vehicle.armed:
 	print 'Waiting for arm.'
 	time.sleep(1)
+
 
 print_status()
 print '\n################# READY FOR FLIGHT #################\n'
