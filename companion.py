@@ -50,6 +50,10 @@ while not vehicle.mode.name == "MANUAL":
 	print 'Waiting for MANUAL mode.'
 	time.sleep(1)
 
+while vehicle.gps_0.satellites_visible < MIN_SATS:
+	print '{} satellites aquired. Waiting for {}.'.format(vehicle.gps_0.satellites_visible, MIN_SATS)
+	time.sleep(1)
+
 vehicle.armed = True
 while not vehicle.armed:
 	print 'Waiting for arm.'
@@ -69,6 +73,8 @@ alt_buffer_ind 	= 0
 
 prev_time_below_burn_alt = mytime()
 while True:
+	if alt_buffer_ind == 0: print_status()	# print status once every 60 seconds
+
 	alt = vehicle.location.global_relative_frame.alt
 	alt_buffer[alt_buffer_ind] = alt
 	alt_buffer_ind += 1
@@ -86,7 +92,6 @@ while True:
 		if time_above > BURN_TIME_ABOVE:
 			break
 
-	if alt_buffer_ind == 0: print_status()	# print status once every 60 seconds
 	time.sleep(LOOP_DELAY)
 
 print_status()
