@@ -1,4 +1,4 @@
-from dronekit import connect, VehicleMode, APIException, LocationGlobal
+from dronekit import connect, VehicleMode, APIException, LocationGlobalRelative
 from pymavlink import mavutil
 import time
 import numpy as np
@@ -34,7 +34,7 @@ def print_status():
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(BURN_PIN, GPIO.OUT)
 GPIO.output(BURN_PIN, GPIO.LOW)
-target_location = LocationGlobal(TARGET_LAT, TARGET_LON, 1000)
+target_location = LocationGlobalRelative(TARGET_LAT, TARGET_LON, 0)
 
 vehicle = None
 try:
