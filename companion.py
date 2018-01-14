@@ -24,9 +24,10 @@ def exit(status):
 	sys.exit(status)
 
 def print_status():
-	print 'Time: {:.2f}s\tMode: {}\t Alt: {}m\tLoc: ({}, {})\tdist: {:.3f}km.'.format(
+	print 'Time: {:.2f}s\tMode: {}\tSats: {}\tAlt: {}m\tLoc: ({}, {})\tdist: {:.3f}km.'.format(
 		mytime(),
 		vehicle.mode.name,
+		vehicle.gps_0.satellites_visible,
 		vehicle.location.global_relative_frame.alt,
 		vehicle.location.global_frame.lat,
 		vehicle.location.global_frame.lon,
@@ -66,6 +67,11 @@ while not vehicle.armed:
 	print 'Waiting for arm.'
 	time.sleep(1)
 
+print 'Downloading commands...'
+cmds = vehicle.commands
+cmds.download()
+cmds.wait_ready()
+print 'Done!'
 
 print_status()
 print '\n################# READY FOR FLIGHT #################\n'
@@ -81,7 +87,7 @@ alt_buffer_ind 	= 0
 
 prev_time_below_burn_alt = mytime()
 while True:
-	if alt_buffer_ind == 0: print_status()	# print status once every 60 seconds
+	if alt_buffer_ind%2 == 0: print_status()	# print status once every second
 
 	alt = vehicle.location.global_relative_frame.alt
 	alt_buffer[alt_buffer_ind] = alt
@@ -111,8 +117,12 @@ print '\n################# REACHED ALTITUDE: BURN STARTED #################\n'
 ###############################################################################
 
 GPIO.output(BURN_PIN, GPIO.HIGH)
-vehicle.mode = VehicleMode("GUIDED")
-vehicle.simple_goto(target_location)
+
+
+# vehicle.mode = VehicleMode("GUIDED")
+# vehicle.simple_goto(target_location)
+cmds.next = 0
+vehicle.mode = VehicleMode("AUTO")
 
 prev_time_above_burn_alt = mytime()
 while True:
@@ -138,5 +148,5 @@ print '\n################# VEHICLE DISCONNECTED: BURN STOPPED #################\
 
 while True:
 	print_status()
-	time.sleep(60)
+	time.sleep(1)
 
