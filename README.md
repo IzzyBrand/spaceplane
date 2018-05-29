@@ -1,6 +1,8 @@
 # spaceplane
 The aim of this project is to release a glider from a high altitude weather balloon and have the glider autonomously navigate back to a target landing spot where it can be recovered.
 
+We had a successful launch of our glider from 10km. See the [video](https://www.youtube.com/watch?v=q10gKcguXW0&feature=youtu.be) and check out the [logs and google earth file](https://drive.google.com/drive/folders/1KMtexJYVcWLs7JZvwk56ADU2vUqgiEpB?usp=sharing). There is more information about our glider available in the video description.
+
 ## SETUP
 ### RASPI-CONFIG
 - enable ssh
